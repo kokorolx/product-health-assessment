@@ -63,7 +63,7 @@
   padding: 5vw;
   justify-content: center;
   align-items: center;
-  perspective: 1000px;
+  perspective: 2000px;
   width: 100%;
   height: 100%;
   position: absolute;
@@ -71,6 +71,7 @@
   overflow: hidden;
   will-change: transform;
   pointer-events: none;
+  transform-style: preserve-3d;
 }
 
 .hexagon {
@@ -81,18 +82,25 @@
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   transition: all var(--hex-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
   transform-style: preserve-3d;
-  transform: translateZ(0);
+  transform: translateZ(0) rotateX(15deg);
   opacity: 0.4;
   will-change: transform, opacity;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 .hexagon::before {
   content: '';
   position: absolute;
   inset: 1px;
-  background: var(--gradient-end);
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start),
+    var(--gradient-end)
+  );
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   z-index: 1;
+  transform: translateZ(-1px);
+  filter: brightness(0.95);
 }
 
 .hexagon::after {
@@ -104,12 +112,16 @@
   z-index: 2;
   opacity: 0;
   transition: opacity 0.3s ease;
+  transform: translateZ(1px);
 }
 
 .hexagon.active {
-  transform: translateZ(20px) scale(var(--hex-active-scale));
-  animation: hexExpand 0.3s ease-out forwards;
+  transform: translateZ(40px) rotateX(15deg) scale(var(--hex-active-scale));
+  animation: hexExpand 0.5s ease-out forwards;
   opacity: 1;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 30px var(--hex-glow);
 }
 
 .hexagon.mounted {
@@ -128,31 +140,37 @@
 
 @keyframes hexExpand {
   0% {
-    transform: translateZ(0) scale(1);
+    transform: translateZ(0) rotateX(15deg) scale(1);
   }
   50% {
-    transform: translateZ(20px) scale(1.1);
+    transform: translateZ(50px) rotateX(15deg) scale(1.1);
   }
   100% {
-    transform: translateZ(10px) scale(1.05);
+    transform: translateZ(40px) rotateX(15deg) scale(1.05);
   }
 }
 
 @keyframes hexGlow {
   0% {
-    box-shadow: 0 0 20px var(--hex-glow),
-                inset 0 0 15px var(--hex-glow);
-    filter: brightness(1.1);
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.2),
+      0 0 30px var(--hex-glow),
+      inset 0 0 15px var(--hex-glow);
+    filter: brightness(1.1) contrast(1.1);
   }
   50% {
-    box-shadow: 0 0 50px var(--hex-glow),
-                inset 0 0 30px var(--hex-glow);
-    filter: brightness(1.4);
+    box-shadow:
+      0 30px 60px rgba(0, 0, 0, 0.3),
+      0 0 50px var(--hex-glow),
+      inset 0 0 30px var(--hex-glow);
+    filter: brightness(1.4) contrast(1.2);
   }
   100% {
-    box-shadow: 0 0 20px var(--hex-glow),
-                inset 0 0 15px var(--hex-glow);
-    filter: brightness(1.1);
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.2),
+      0 0 30px var(--hex-glow),
+      inset 0 0 15px var(--hex-glow);
+    filter: brightness(1.1) contrast(1.1);
   }
 }
 
