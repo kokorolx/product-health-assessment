@@ -57,10 +57,10 @@
 /* Hexagon Grid Styles */
 .hexagon-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: min(4vw, 40px);
-  padding: 5vw;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: min(2vw, 20px);
+  padding: 2vw;
   justify-content: center;
   align-items: center;
   perspective: 2000px;
@@ -72,35 +72,84 @@
   will-change: transform;
   pointer-events: none;
   transform-style: preserve-3d;
+  z-index: 10;
+}
+
+canvas.hexagon-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: transparent;
+}
+
+.hexagon-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: auto;
+  opacity: 1;
+  background: transparent;
 }
 
 .hexagon {
-  width: min(30vw, 400px);
-  height: min(30vw, 400px);
-  position: relative;
-  background-color: transparent;
+  width: min(15vw, 200px);
+  height: min(15vw, 200px);
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   transition: all var(--hex-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
   transform-style: preserve-3d;
-  transform: translateZ(0) rotateX(15deg);
-  opacity: 0.4;
-  will-change: transform, opacity;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  opacity: 0.8;
+  will-change: transform;
+  pointer-events: all;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
 }
 
 .hexagon::before {
   content: '';
   position: absolute;
-  inset: 1px;
-  background: linear-gradient(
-    135deg,
-    var(--gradient-start),
-    var(--gradient-end)
-  );
+  inset: 0;
+  background: inherit;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   z-index: 1;
   transform: translateZ(-1px);
-  filter: brightness(0.95);
+}
+
+.hexagon-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: rgba(0, 0, 0, 0.5);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+.hexagon:hover .hexagon-content {
+  opacity: 1;
+}
+
+.product-info {
+  color: white;
+  text-align: center;
+}
+
+.product-score {
+  font-size: 1.5rem;
+  font-weight: bold;
+  background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .hexagon::after {
@@ -116,7 +165,7 @@
 }
 
 .hexagon.active {
-  transform: translateZ(40px) rotateX(15deg) scale(var(--hex-active-scale));
+  transform: translateZ(30px) rotateX(15deg) scale(var(--hex-active-scale));
   animation: hexExpand 0.5s ease-out forwards;
   opacity: 1;
   box-shadow:
@@ -151,26 +200,11 @@
 }
 
 @keyframes hexGlow {
-  0% {
-    box-shadow:
-      0 20px 40px rgba(0, 0, 0, 0.2),
-      0 0 30px var(--hex-glow),
-      inset 0 0 15px var(--hex-glow);
-    filter: brightness(1.1) contrast(1.1);
+   0%, 100% {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 30px var(--hex-glow);
   }
   50% {
-    box-shadow:
-      0 30px 60px rgba(0, 0, 0, 0.3),
-      0 0 50px var(--hex-glow),
-      inset 0 0 30px var(--hex-glow);
-    filter: brightness(1.4) contrast(1.2);
-  }
-  100% {
-    box-shadow:
-      0 20px 40px rgba(0, 0, 0, 0.2),
-      0 0 30px var(--hex-glow),
-      inset 0 0 15px var(--hex-glow);
-    filter: brightness(1.1) contrast(1.1);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), 0 0 50px var(--hex-glow);
   }
 }
 
@@ -203,20 +237,77 @@ body {
 
 .hero-background {
   background: linear-gradient(45deg,
-    rgba(66, 153, 225, 0.6),
-    rgba(49, 130, 206, 0.6),
-    rgba(79, 209, 197, 0.6)
+    rgba(66, 153, 225, 0.1),
+    rgba(49, 130, 206, 0.1),
+    rgba(79, 209, 197, 0.1),
+    rgba(124, 58, 237, 0.1)
   );
-  background-size: 400% 400%;
   position: relative;
   overflow: hidden;
-  animation: gradientShift 15s ease infinite;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
 }
 
+/* Remove gradientShift animation */
 @keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes floatCard {
+  0% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-10px) translateX(5px); }
+  50% { transform: translateY(0) translateX(0); }
+  75% { transform: translateY(10px) translateX(-5px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+
+@keyframes textGradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.07),
+    0 0 20px rgba(66, 153, 225, 0.1),
+    0 0 40px rgba(79, 209, 197, 0.1);
+  animation: floatCard 6s ease-in-out infinite;
+  position: relative;
+  z-index: 50;
+}
+
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.hero-background h1 {
+  background-size: 200% auto;
+  animation: textGradient 4s ease infinite;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  animation: particleFade 3s ease-in-out infinite;
+}
+
+@keyframes particleFade {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  50% { opacity: 0.8; transform: translateY(-20px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-40px) scale(1); }
 }
 
 .floating-element {
@@ -260,12 +351,6 @@ body {
   animation-delay: 600ms;
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in {

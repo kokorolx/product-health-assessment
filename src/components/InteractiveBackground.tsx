@@ -11,6 +11,8 @@ interface ParticleSystem extends THREE.Points {
   accelerations?: Float32Array;
   maxSpeed?: number;
   mouseInfluenceRadius?: number;
+  lifespan?: Float32Array;
+  sizes?: Float32Array;
 }
 
 const MouseGlow: React.FC = () => {
@@ -189,11 +191,13 @@ const ParticleEffect: React.FC = () => {
     if (!pointsRef.current) return
 
     const geometry = pointsRef.current.geometry
-    const particleCount = 2000 // Increased for denser effect
+    const particleCount = 3000 // More particles for richer effect
     const positions = new Float32Array(particleCount * 3)
     const velocities = new Float32Array(particleCount * 3)
     const accelerations = new Float32Array(particleCount * 3)
     const colors = new Float32Array(particleCount * 3)
+    const lifespan = new Float32Array(particleCount)
+    const sizes = new Float32Array(particleCount)
 
     for (let i = 0; i < positions.length; i += 3) {
       // Distribute particles more naturally
@@ -239,14 +243,24 @@ const ParticleEffect: React.FC = () => {
       }
     }
 
+    // Initialize particle attributes
+    for (let i = 0; i < particleCount; i++) {
+      lifespan[i] = Math.random() * 5 + 2 // Random lifespan between 2-7 seconds
+      sizes[i] = 1.5 + Math.random() * 2.5 // Random size between 1.5-4
+    }
+
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
+    geometry.setAttribute('lifespan', new THREE.BufferAttribute(lifespan, 1))
 
     if (pointsRef.current) {
       pointsRef.current.velocities = velocities
       pointsRef.current.accelerations = accelerations
-      pointsRef.current.maxSpeed = 0.12 // Balanced speed for smooth movement
-      pointsRef.current.mouseInfluenceRadius = 5 // Extended influence radius
+      pointsRef.current.maxSpeed = 0.12
+      pointsRef.current.mouseInfluenceRadius = 5
+      pointsRef.current.lifespan = lifespan
+      pointsRef.current.sizes = sizes
     }
   }, [viewport.width, viewport.height])
 
@@ -369,7 +383,6 @@ const ParticleEffect: React.FC = () => {
       <bufferGeometry />
       <pointsMaterial
         ref={materialRef}
-        size={3.0}
         transparent
         opacity={0.75}
         vertexColors
@@ -377,7 +390,7 @@ const ParticleEffect: React.FC = () => {
         depthWrite={false}
         sizeAttenuation={true}
         map={particleTexture.current}
-        customProgramCacheKey="particle-material"
+        customProgramCacheKey="particle-material-dynamic"
         onBeforeCompile={(shader) => {
           const uniforms = createParticleUniforms()
           shader.uniforms = { ...shader.uniforms, ...uniforms }
@@ -386,19 +399,25 @@ const ParticleEffect: React.FC = () => {
             'void main() {',
             `
             uniform float time;
+            attribute float size;
+            attribute float lifespan;
 
             float getNormalizedPulse(float t, float freq, float phase) {
               return 0.5 * (1.0 + sin(t * freq + phase));
             }
 
             void main() {
+              float age = mod(time, lifespan);
+              float normalizedAge = age / lifespan;
+              float fade = sin(normalizedAge * 3.14159);
               float pulse = 1.0 + getNormalizedPulse(time, 2.0, position.x * 0.5 + position.y * 0.5) * 0.15;
+              float finalSize = size * pulse * fade;
             `
           )
 
           shader.vertexShader = shader.vertexShader.replace(
             'gl_PointSize = size;',
-            'gl_PointSize = size * pulse;'
+            'gl_PointSize = finalSize;'
           )
 
           if (materialRef.current) {

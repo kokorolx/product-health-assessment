@@ -1,9 +1,9 @@
 import ProductCard from './ProductCard';
-import { Product } from '@/types';
+import { DetailedProduct } from '@/types';
 
 interface ProductGridProps {
-  products: Product[];
-  onProductClick: (product: Product) => void;
+  products: DetailedProduct[];
+  onProductClick: (product: DetailedProduct) => void;
 }
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick }) => {

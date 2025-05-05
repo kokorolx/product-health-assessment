@@ -16,7 +16,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
       onClick={onClick}
     >
       {/* Product Image */}
@@ -25,8 +25,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
           src={image_url}
           alt={product_name}
           fill
-          className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover"
         />
       </div>
 

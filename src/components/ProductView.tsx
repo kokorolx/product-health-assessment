@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Product } from '@/types';
+import { DetailedProduct } from '@/types';
 import FilterBar from './FilterBar';
 import ProductGrid from './ProductGrid';
 import ProductModal from './ProductModal';
@@ -10,16 +10,18 @@ import ImageUploadForm from './ImageUploadForm';
 import { getFilteredProducts, getInitialProducts } from '@/lib/data';
 
 interface ProductViewProps {
-  initialProducts: Product[];
+  initialProducts: DetailedProduct[];
 }
 
 const ProductView = ({ initialProducts }: ProductViewProps) => {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [state, setState] = useState({
+    products: initialProducts,
+    activeFilters: [] as string[],
+    isLoading: false,
+    error: null as string | null,
+    selectedProduct: null as DetailedProduct | null,
+    isModalOpen: false,
+  });
   const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
 
   // Derive available filters from initial products
@@ -35,45 +37,52 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
   ].sort();
 
   const handleFilterClick = (filter: string) => {
-    setActiveFilters(prev => {
-      if (prev.includes(filter)) {
-        return prev.filter(f => f !== filter);
-      }
-      return [...prev, filter];
+    setState(prev => {
+      const activeFilters = prev.activeFilters.includes(filter)
+        ? prev.activeFilters.filter(f => f !== filter)
+        : [...prev.activeFilters, filter];
+      return { ...prev, activeFilters };
     });
   };
 
   const handleClearFilters = () => {
-    setActiveFilters([]);
+    setState(prev => ({ ...prev, activeFilters: [] }));
   };
 
   // Fetch filtered products when filters change
   useEffect(() => {
     const fetchFilteredProducts = async () => {
-      setIsLoading(true);
-      setError(null);
+      setState(prev => ({ ...prev, isLoading: true, error: null }));
       try {
-        const filteredProducts = await getFilteredProducts(activeFilters);
-        setProducts(filteredProducts);
+        const filteredProducts = await getFilteredProducts(state.activeFilters);
+        setState(prev => ({ ...prev, products: filteredProducts, isLoading: false }));
       } catch (err) {
-        setError('Failed to fetch filtered products');
         console.error('Error fetching filtered products:', err);
-      } finally {
-        setIsLoading(false);
+        setState(prev => ({
+          ...prev,
+          error: 'Failed to fetch filtered products',
+          isLoading: false
+        }));
       }
     };
 
     fetchFilteredProducts();
-  }, [activeFilters]);
+  }, [state.activeFilters]);
 
-  const handleProductClick = (product: Product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
+  const handleProductClick = (product: DetailedProduct) => {
+    setState(prev => ({
+      ...prev,
+      selectedProduct: product,
+      isModalOpen: true
+    }));
   };
 
   const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedProduct(null);
+    setState(prev => ({
+      ...prev,
+      selectedProduct: null,
+      isModalOpen: false
+    }));
   };
 
   const handleOpenUploadForm = () => {
@@ -85,15 +94,17 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
   };
 
   const refreshProducts = async () => {
-    setIsLoading(true);
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
       const latestProducts = await getInitialProducts();
-      setProducts(latestProducts);
+      setState(prev => ({ ...prev, products: latestProducts, isLoading: false }));
     } catch (err) {
       console.error('Error refreshing products:', err);
-      setError('Failed to refresh products');
-    } finally {
-      setIsLoading(false);
+      setState(prev => ({
+        ...prev,
+        error: 'Failed to refresh products',
+        isLoading: false
+      }));
     }
   };
 
@@ -103,29 +114,29 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <FilterBar
           availableFilters={availableFilters}
-          activeFilters={activeFilters}
+          activeFilters={state.activeFilters}
           onFilterClick={handleFilterClick}
           onClearFilters={handleClearFilters}
         />
 
         <div className="mt-8">
-          {error && (
+          {state.error && (
             <div className="text-red-600 mb-4" role="alert">
-              {error}
+              {state.error}
             </div>
           )}
-          {isLoading ? (
+          {state.isLoading ? (
             <div className="flex justify-center items-center min-h-[200px]">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             </div>
           ) : (
             <>
-              <ProductGrid products={products} onProductClick={handleProductClick} />
-              {selectedProduct && (
+              <ProductGrid products={state.products} onProductClick={handleProductClick} />
+              {state.selectedProduct && (
                 <ProductModal
-                  isOpen={isModalOpen}
+                  isOpen={state.isModalOpen}
                   onClose={handleCloseModal}
-                  product={selectedProduct}
+                  product={state.selectedProduct}
                 />
               )}
             </>

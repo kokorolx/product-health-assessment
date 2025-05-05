@@ -1,23 +1,24 @@
 'use client'
 
-import { motion, useMotionValue, useTransform } from 'framer-motion'
-import React from 'react'
+import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion'
+import React, { useState } from 'react'
 
-interface Point {
-  x: number
-  y: number
-}
-
-const GRID_WIDTH = 20
-const GRID_HEIGHT = 20
 const CELL_SIZE = 40
+const DEPTH_LAYERS = 3
+const LAYER_DEPTH = 20
 
 const Hero3D = () => {
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
+  const [isHovered, setIsHovered] = useState(false)
 
-  const rotateX = useTransform(mouseY, [-300, 300], [10, -10])
-  const rotateY = useTransform(mouseX, [-300, 300], [-10, 10])
+  const rotateX = useTransform(mouseY, [-300, 300], [15, -15])
+  const rotateY = useTransform(mouseX, [-300, 300], [-15, 15])
+  const scale = useTransform(
+    mouseX,
+    [-300, 0, 300],
+    [0.95, 1, 0.95]
+  )
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
@@ -28,16 +29,6 @@ const Hero3D = () => {
     mouseY.set(e.clientY - centerY)
   }
 
-  // Generate grid points
-  const points: Point[] = []
-  for (let i = 0; i < GRID_WIDTH; i++) {
-    for (let j = 0; j < GRID_HEIGHT; j++) {
-      points.push({
-        x: i * CELL_SIZE,
-        y: j * CELL_SIZE,
-      })
-    }
-  }
 
   // Reset on mouse leave
   const handleMouseLeave = () => {
@@ -49,41 +40,86 @@ const Hero3D = () => {
     <motion.div
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{ perspective: 1000 }}
-      className="absolute inset-0 overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      style={{ perspective: 1500 }}
+      className="absolute inset-0 overflow-hidden bg-gradient-to-br from-blue-900/10 to-purple-900/10"
     >
       <motion.div
         style={{
           rotateX,
           rotateY,
+          scale,
           transformStyle: "preserve-3d",
+          transition: 'transform 0.1s ease-out'
         }}
         className="relative h-full w-full"
       >
-        {/* Grid pattern */}
-        <div className="absolute inset-0">
-          <svg width="100%" height="100%" className="opacity-20">
-            <pattern
-              id="grid"
-              width={CELL_SIZE}
-              height={CELL_SIZE}
-              patternUnits="userSpaceOnUse"
-            >
-              <path
-                d={`M ${CELL_SIZE} 0 L 0 0 0 ${CELL_SIZE}`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="0.5"
-                className="text-blue-500"
-              />
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
+        {/* Multiple depth layers with grid patterns */}
+        {[...Array(DEPTH_LAYERS)].map((_, index) => (
+          <motion.div
+            key={index}
+            className="absolute inset-0"
+            style={{
+              transform: `translateZ(${-index * LAYER_DEPTH}px)`,
+              opacity: 1 - (index * 0.2)
+            }}
+          >
+            <svg width="100%" height="100%" className={`opacity-${20 - index * 5}`}>
+              <pattern
+                id={`grid-${index}`}
+                width={CELL_SIZE}
+                height={CELL_SIZE}
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d={`M ${CELL_SIZE} 0 L 0 0 0 ${CELL_SIZE}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={0.5 - index * 0.1}
+                  className="text-blue-500"
+                />
+              </pattern>
+              <rect width="100%" height="100%" fill={`url(#grid-${index})`} />
+            </svg>
 
-        {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/10" />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
+            {/* Layer-specific gradient overlays */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/5"
+                 style={{ opacity: 0.8 - index * 0.2 }} />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/5"
+                 style={{ opacity: 0.8 - index * 0.2 }} />
+          </motion.div>
+        ))}
+
+        {/* Hover effect particles */}
+        <AnimatePresence>
+          {isHovered && [...Array(15)].map((_, i) => (
+            <motion.div
+              key={`particle-${i}`}
+              className="absolute w-1 h-1 bg-blue-400/30 rounded-full"
+              initial={{
+                opacity: 0,
+                x: Math.random() * 100 - 50,
+                y: Math.random() * 100 - 50,
+                scale: 0
+              }}
+              animate={{
+                opacity: [0, 0.8, 0],
+                x: Math.random() * 200 - 100,
+                y: Math.random() * 200 - 100,
+                scale: [0, 1.5, 0],
+                z: Math.random() * -200
+              }}
+              exit={{ opacity: 0, scale: 0 }}
+              transition={{
+                duration: 2,
+                ease: "easeInOut",
+                repeat: Infinity,
+                repeatDelay: Math.random() * 2
+              }}
+              style={{ transformStyle: "preserve-3d" }}
+            />
+          ))}
+        </AnimatePresence>
       </motion.div>
     </motion.div>
   )

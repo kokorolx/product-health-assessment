@@ -1,9 +1,31 @@
 'use client'
 
 import Link from 'next/link'
-import InteractiveBackground from '@/components/InteractiveBackground'
+import React, { useState, useEffect } from 'react'; // Import useState and useEffect
+// import InteractiveBackground from '@/components/InteractiveBackground' // Remove old import
+import HexagonHeroBackground from '@/components/HexagonHeroBackground' // Add new import
+import { getInitialProducts } from '@/lib/data' // Import data fetching function
+import { Product } from '@/types' // Import Product type
 
 export default function Home() {
+  const [imageUrls, setImageUrls] = useState<string[]>([]); // State for image URLs
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        const products: Product[] = await getInitialProducts();
+        // Filter out null/undefined URLs and map to string array
+        const urls = products.map(p => p.image_url).filter((url): url is string => !!url);
+        setImageUrls(urls);
+      } catch (error) {
+        console.error("Failed to fetch product images for background:", error);
+        // Keep imageUrls empty on error
+      }
+    };
+
+    fetchImages();
+  }, []); // Fetch on mount
+
   const techStack = [
     { name: 'n8n', icon: '🔄' },
     { name: 'AWS EC2', icon: '☁️' },
@@ -18,9 +40,23 @@ export default function Home() {
     <main className="relative min-h-screen bg-gradient-to-b from-[#f5f7fa] to-[#e5eaf1] dark:from-[#1a1c2a] dark:to-[#0f111e]">
       {/* Hero Section */}
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden hero-background">
-        <InteractiveBackground />
+        <HexagonHeroBackground imageUrls={imageUrls} /> {/* Pass image URLs */}
+        {/* Remove the old particle divs if they are not needed with the new background */}
+        {/* {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="particle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
+            }}
+          />
+        ))} */}
         <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-          <div className="glass-card p-8 rounded-2xl mb-8 animate-fade-in backdrop-blur-xl">
+          {/* Adjusted glass-card for better visibility over the potentially busy background */}
+          <div className="glass-card p-8 rounded-2xl mb-8 animate-fade-in backdrop-blur-lg bg-white/10 dark:bg-black/20">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 mb-6">
               AI-Powered Insights for Consumer Products
             </h1>

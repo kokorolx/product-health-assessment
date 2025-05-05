@@ -1,18 +1,11 @@
-import { Product, DetailedProduct } from '@/types';
+import { DetailedProduct } from '@/types';
 import { supabase } from './supabaseClient';
 
-export async function getInitialProducts(): Promise<Product[]> {
+export async function getInitialProducts(): Promise<DetailedProduct[]> {
   try {
     const { data, error } = await supabase
       .from('product_health_assessments')
-      .select(`
-        id,
-        image_url,
-        product_name,
-        health_score,
-        category,
-        suitable_for
-      `)
+      .select('*')
       .limit(20)
       .order('created_at', { ascending: false });
 
@@ -25,14 +18,14 @@ export async function getInitialProducts(): Promise<Product[]> {
       return [];
     }
 
-    return data as Product[];
+    return data as DetailedProduct[];
   } catch (error) {
     console.error('Error fetching products:', error);
     throw error;
   }
 }
 
-export async function getFilteredProducts(activeFilters: string[]): Promise<Product[]> {
+export async function getFilteredProducts(activeFilters: string[]): Promise<DetailedProduct[]> {
   try {
     // If no filters are active, return initial products
     if (activeFilters.length === 0) {
@@ -42,14 +35,7 @@ export async function getFilteredProducts(activeFilters: string[]): Promise<Prod
     // Start building the query
     let query = supabase
       .from('product_health_assessments')
-      .select(`
-        id,
-        image_url,
-        product_name,
-        health_score,
-        category,
-        suitable_for
-      `);
+      .select('*');
 
     // Separate filters by type
     const categoryFilters = activeFilters
@@ -102,33 +88,9 @@ export async function getFilteredProducts(activeFilters: string[]): Promise<Prod
       return [];
     }
 
-    return data as Product[];
+    return data as DetailedProduct[];
   } catch (error) {
     console.error('Error fetching filtered products:', error);
-    throw error;
-  }
-}
-
-export async function getProductDetails(id: string): Promise<DetailedProduct> {
-  try {
-    const { data, error } = await supabase
-      .from('product_health_assessments')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error('Error fetching product details:', error);
-      throw error;
-    }
-
-    if (!data) {
-      throw new Error('Product not found');
-    }
-
-    return data as DetailedProduct;
-  } catch (error) {
-    console.error('Error fetching product details:', error);
     throw error;
   }
 }
