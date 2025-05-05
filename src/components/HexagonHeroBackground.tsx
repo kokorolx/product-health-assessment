@@ -268,17 +268,6 @@ const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full hexagon-background"
-        style={{ zIndex: -1 }}
-      />
-      <div
-        ref={tooltipRef}
-        className="fixed hidden bg-white dark:bg-gray-800 text-black dark:text-white rounded-lg shadow-xl max-w-lg transition-all duration-200 ease-in-out"
-        style={{
-          zIndex: 1000,
-          pointerEvents: 'none',
-          width: `${popupImageSize + 32}px`,
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-        }}
       />
     </>
   );
