@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import RoadmapSection from '@/components/RoadmapSection';
 import React, { useState, useEffect } from 'react';
 import HexagonHeroBackground from '@/components/HexagonHeroBackground';
@@ -175,9 +176,11 @@ export function HomePage({ techStack }: HomePageProps) {
                       {rowTechs.map((tech) => (
                         <div key={tech.name} className="text-center">
                           <div className="tech-icon-container">
-                            <img
+                            <Image
                               src={tech.imagePath}
                               alt={`${tech.name} logo`}
+                              width={48}
+                              height={48}
                               className="tech-icon"
                             />
                           </div>
@@ -190,9 +193,11 @@ export function HomePage({ techStack }: HomePageProps) {
                       {rowTechs.map((tech) => (
                         <div key={`${tech.name}-duplicate`} className="text-center">
                           <div className="tech-icon-container">
-                            <img
+                            <Image
                               src={tech.imagePath}
                               alt={`${tech.name} logo`}
+                              width={48}
+                              height={48}
                               className="tech-icon"
                             />
                           </div>

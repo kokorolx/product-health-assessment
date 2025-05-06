@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { uploadProductImage, createProductRecord, updateProductImage } from '@/lib/storage';
 
 interface ImageUploadFormProps {
@@ -156,9 +157,11 @@ const ImageUploadForm = ({ isOpen, onClose, productId, onSuccess }: ImageUploadF
                 {/* Image Preview */}
                 {previewUrl && (
                   <div className="mt-2 relative w-full h-48">
-                    <img
+                    <Image
                       src={previewUrl}
                       alt="Preview"
+                      fill
+                      unoptimized={true}
                       className="rounded-md object-cover w-full h-full"
                     />
                   </div>

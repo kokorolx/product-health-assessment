@@ -71,47 +71,47 @@ const InteractiveBackground = () => {
     }
   }, [])
 
-  const handleMouseMove = useCallback(
-    throttle((e: MouseEvent) => {
-      if (!containerRef.current) return
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!containerRef.current) return
 
-      const elements = containerRef.current.getElementsByClassName('floating-element')
-      const rect = containerRef.current.getBoundingClientRect()
-      const mouseX = e.clientX - rect.left
-      const mouseY = e.clientY - rect.top
+    const elements = containerRef.current.getElementsByClassName('floating-element')
+    const rect = containerRef.current.getBoundingClientRect()
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
 
-      Array.from(elements).forEach((el) => {
-        const element = el as HTMLElement
-        const elementRect = element.getBoundingClientRect()
-        const elementX = elementRect.left - rect.left + elementRect.width / 2
-        const elementY = elementRect.top - rect.top + elementRect.height / 2
+    Array.from(elements).forEach((el) => {
+      const element = el as HTMLElement
+      const elementRect = element.getBoundingClientRect()
+      const elementX = elementRect.left - rect.left + elementRect.width / 2
+      const elementY = elementRect.top - rect.top + elementRect.height / 2
 
-        // Calculate distance from mouse
-        const deltaX = mouseX - elementX
-        const deltaY = mouseY - elementY
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+      // Calculate distance from mouse
+      const deltaX = mouseX - elementX
+      const deltaY = mouseY - elementY
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
 
-        // Move elements only if they're within 200px of the cursor
-        if (distance < 200) {
-          const moveX = (deltaX / distance) * 2 // Adjust multiplier to control movement intensity
-          const moveY = (deltaY / distance) * 2
-          element.style.transform = `translate(${moveX}px, ${moveY}px)`
-        } else {
-          element.style.transform = 'translate(0, 0)'
-        }
-      })
-    }, 16), // Throttle to ~60fps
-    []
-  )
+      // Move elements only if they're within 200px of the cursor
+      if (distance < 200) {
+        const moveX = (deltaX / distance) * 2 // Adjust multiplier to control movement intensity
+        const moveY = (deltaY / distance) * 2
+        element.style.transform = `translate(${moveX}px, ${moveY}px)`
+      } else {
+        element.style.transform = 'translate(0, 0)'
+      }
+    })
+  }, [containerRef])
 
   useEffect(() => {
     createFloatingElements()
+    const throttledMove = throttle(handleMouseMove, 16)
+
     window.addEventListener('resize', createFloatingElements)
-    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', throttledMove)
 
     return () => {
       window.removeEventListener('resize', createFloatingElements)
-      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mousemove', throttledMove)
+      throttledMove.cancel()
     }
   }, [createFloatingElements, handleMouseMove])
 
