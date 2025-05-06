@@ -6,8 +6,7 @@ import FilterBar from './FilterBar';
 import ProductGrid from './ProductGrid';
 import ProductModal from './ProductModal';
 import Header from './Header';
-import ImageUploadForm from './ImageUploadForm';
-import { getFilteredProducts, getInitialProducts } from '@/lib/data';
+import { getFilteredProducts } from '@/lib/data';
 
 interface ProductViewProps {
   initialProducts: DetailedProduct[];
@@ -22,7 +21,6 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
     selectedProduct: null as DetailedProduct | null,
     isModalOpen: false,
   });
-  const [isUploadFormOpen, setIsUploadFormOpen] = useState(false);
 
   // Derive available filters from initial products
   const availableFilters = [
@@ -85,32 +83,10 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
     }));
   };
 
-  const handleOpenUploadForm = () => {
-    setIsUploadFormOpen(true);
-  };
-
-  const handleCloseUploadForm = () => {
-    setIsUploadFormOpen(false);
-  };
-
-  const refreshProducts = async () => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-    try {
-      const latestProducts = await getInitialProducts();
-      setState(prev => ({ ...prev, products: latestProducts, isLoading: false }));
-    } catch (err) {
-      console.error('Error refreshing products:', err);
-      setState(prev => ({
-        ...prev,
-        error: 'Failed to refresh products',
-        isLoading: false
-      }));
-    }
-  };
 
   return (
     <>
-      <Header onUploadClick={handleOpenUploadForm} />
+      <Header showTelegramButton={true} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <FilterBar
           availableFilters={availableFilters}
@@ -142,13 +118,6 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
             </>
           )}
         </div>
-        <ImageUploadForm
-          isOpen={isUploadFormOpen}
-          onClose={() => {
-            handleCloseUploadForm();
-            refreshProducts();
-          }}
-        />
       </div>
     </>
   );

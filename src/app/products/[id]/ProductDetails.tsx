@@ -1,24 +1,16 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DetailedProduct } from '@/types';
 import HealthScoreIndicator from '@/components/HealthScoreIndicator';
 import SuitabilityNotes from '@/components/SuitabilityNotes';
-import ImageUploadForm from '@/components/ImageUploadForm';
 
 interface ProductDetailsProps {
   product: DetailedProduct;
 }
 
 export default function ProductDetails({ product }: ProductDetailsProps) {
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = useState(product.image_url);
-
-  const handleImageUpdate = (newImageUrl: string) => {
-    setCurrentImageUrl(newImageUrl);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -36,17 +28,11 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
               <div>
                 <div className="relative w-full h-96">
                   <Image
-                    src={currentImageUrl}
+                    src={product.image_url}
                     alt={product.product_name}
                     fill
                     className="object-contain rounded-lg"
                   />
-                  <button
-                    onClick={() => setIsUploadModalOpen(true)}
-                    className="absolute bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    Update Image
-                  </button>
                 </div>
               </div>
 
@@ -169,13 +155,6 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
           </div>
         </div>
       </div>
-
-      <ImageUploadForm
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-        productId={product.id}
-        onSuccess={handleImageUpdate}
-      />
     </div>
   );
 }
