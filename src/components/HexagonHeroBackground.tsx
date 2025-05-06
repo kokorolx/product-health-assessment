@@ -377,7 +377,7 @@ const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls
     <>
       <canvas
         ref={canvasRef}
-        className="absolute top-0 left-0 w-full h-full hexagon-background"
+        className="absolute top-0 left-0 w-full h-full hexagon-background pointer-events-none -z-10"
       />
       {/* Tooltip Element */}
       <div
