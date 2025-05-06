@@ -5,7 +5,44 @@ import React, { useRef, useEffect } from 'react';
 interface HexagonHeroBackgroundProps {
   imageUrls?: string[];
   info?: { [key: string]: string };
+  productDetails?: { [key: string]: { health_score: number; [key: string]: unknown } }; // Use unknown instead of any
 }
+
+// --- Copied URL Transformation Logic ---
+const transformImageUrl = (url: string, { width, quality }: { width: number, quality: number }) => {
+  if (!url) return url;
+
+  try {
+    // Format: https://[project-ref].supabase.co/storage/v1/render/image/public/[bucket]/[file-path]
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+
+    // Check if this is a storage URL
+    if (!pathname.includes('/storage/v1/object/public/')) return url;
+
+    // Convert object path to render path
+    const newPathname = pathname
+      .replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+
+    // Construct transform URL
+    const transformUrl = `${urlObj.origin}${newPathname}?width=${width}&quality=${quality}`;
+    // console.log('Transform URL:', transformUrl); // Keep commented unless debugging URLs
+    return transformUrl;
+
+  } catch (error) {
+    console.error('Error transforming URL:', error);
+    return url;
+  }
+};
+
+const getLowQualityImageUrl = (url: string) => {
+  return transformImageUrl(url, { width: 100, quality: 60 });
+};
+
+const getHighQualityImageUrl = (url: string) => {
+  return transformImageUrl(url, { width: 1200, quality: 100 });
+};
+// --- End Copied Logic ---
 
 class Hexagon {
   x: number;
@@ -14,29 +51,61 @@ class Hexagon {
   vy: number;
   z: number;
   radius: number;
-  image: HTMLImageElement | null = null;
-  imageUrl: string | null = null;
-  imageLoaded: boolean = false;
+  originalImageUrl: string | null = null; // Store original URL
+  imageLQ: HTMLImageElement | null = null; // Low Quality Image
+  imageHQ: HTMLImageElement | null = null; // High Quality Image
+  imageLQLoaded: boolean = false;
+  imageHQLoaded: boolean = false;
+  imageHQLoading: boolean = false; // Flag to prevent multiple load attempts
   isHovered: boolean = false;
   scale: number = 1;
+  score: number | null = null;
 
-  constructor(x: number, y: number, vx: number, vy: number, z: number, radius: number, imageUrl?: string) {
+  constructor(x: number, y: number, vx: number, vy: number, z: number, radius: number, originalUrl?: string, score?: number) {
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
     this.z = z;
     this.radius = radius;
+    this.score = score ?? null;
+    this.originalImageUrl = originalUrl || null;
 
-    if (imageUrl) {
-      this.imageUrl = imageUrl;
-      const img = new Image();
-      img.onload = () => {
-        this.image = img;
-        this.imageLoaded = true;
+    if (originalUrl) {
+      const lqUrl = getLowQualityImageUrl(originalUrl);
+      const imgLQ = new Image();
+      imgLQ.onload = () => {
+        this.imageLQ = imgLQ;
+        this.imageLQLoaded = true;
+        // console.log('LQ Image Loaded:', lqUrl); // Debug log
       };
-      img.src = imageUrl;
+      imgLQ.onerror = () => {
+        console.error('Error loading LQ image:', lqUrl);
+      };
+      imgLQ.src = lqUrl;
     }
+  }
+
+  loadHighQualityImage() {
+    if (!this.originalImageUrl || this.imageHQLoaded || this.imageHQLoading) {
+      return; // Already loaded, loading, or no URL
+    }
+
+    this.imageHQLoading = true;
+    const hqUrl = getHighQualityImageUrl(this.originalImageUrl);
+    // console.log('Starting HQ Image Load:', hqUrl); // Debug log
+    const imgHQ = new Image();
+    imgHQ.onload = () => {
+      this.imageHQ = imgHQ;
+      this.imageHQLoaded = true;
+      this.imageHQLoading = false;
+      // console.log('HQ Image Loaded:', hqUrl); // Debug log
+    };
+    imgHQ.onerror = () => {
+      console.error('Error loading HQ image:', hqUrl);
+      this.imageHQLoading = false; // Allow retry maybe? Or just mark as failed?
+    };
+    imgHQ.src = hqUrl;
   }
 
   isPointInside(px: number, py: number): boolean {
@@ -78,21 +147,30 @@ class Hexagon {
     }
     context.closePath();
 
-    if (this.image && this.imageLoaded) {
+    // Determine which image to draw
+    let imageToDraw: HTMLImageElement | null = null;
+    if (this.isHovered && this.imageHQLoaded && this.imageHQ) {
+      imageToDraw = this.imageHQ;
+    } else if (this.imageLQLoaded && this.imageLQ) {
+      imageToDraw = this.imageLQ;
+    }
+
+    if (imageToDraw) {
       context.save();
-      context.clip();
+      context.clip(); // Clip to hexagon shape
       try {
-        const aspectRatio = this.image.width / this.image.height;
+        const aspectRatio = imageToDraw.width / imageToDraw.height;
         let drawWidth = scaledRadius * 2;
         let drawHeight = drawWidth / aspectRatio;
 
+        // Ensure the image covers the hexagon area
         if (drawHeight < scaledRadius * 2) {
           drawHeight = scaledRadius * 2;
           drawWidth = drawHeight * aspectRatio;
         }
 
         context.drawImage(
-          this.image,
+          imageToDraw,
           this.x - drawWidth / 2,
           this.y - drawHeight / 2,
           drawWidth,
@@ -100,18 +178,31 @@ class Hexagon {
         );
       } catch (e) {
         console.error("Error drawing image:", e);
+        // Fallback fill if drawing fails
         context.fillStyle = `rgba(0, 180, 180, ${0.2 + this.z * 0.4})`;
         context.fill();
       }
-      context.restore();
+      context.restore(); // Restore context after clipping
     } else {
+      // Fallback fill if no image is loaded/available
       context.fillStyle = `rgba(0, 180, 180, ${0.2 + this.z * 0.4})`;
       context.fill();
     }
 
+    // Draw border based on score if hovered
     if (this.isHovered) {
-      context.strokeStyle = '#ffffff';
-      context.lineWidth = 2;
+      let borderColor = '#ffffff'; // Default border color
+      if (this.score !== null) {
+        if (this.score >= 80) {
+          borderColor = '#00ff00'; // Green
+        } else if (this.score >= 40) {
+          borderColor = '#ffff00'; // Yellow
+        } else {
+          borderColor = '#ff0000'; // Red
+        }
+      }
+      context.strokeStyle = borderColor;
+      context.lineWidth = 4; // Set border width to 4px
       context.stroke();
     }
 
@@ -134,7 +225,7 @@ class Hexagon {
   }
 }
 
-const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls = [], info = {} }) => {
+const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls = [], info = {}, productDetails = {} }) => { // Accept productDetails prop
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hoveredHexagon = useRef<Hexagon | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -167,7 +258,8 @@ const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls
         const vy = (Math.random() - 0.5) * 2;
         const z = Math.random() * 0.5 + 0.5;
         const imageUrl = imageUrls[i];
-        hexagons.push(new Hexagon(x, y, vx, vy, z, baseRadius * z, imageUrl));
+        const score = imageUrl ? productDetails[imageUrl]?.health_score : undefined; // Get health_score from productDetails
+        hexagons.push(new Hexagon(x, y, vx, vy, z, baseRadius * z, imageUrl, score)); // Pass score to constructor
       }
     };
 
@@ -191,22 +283,40 @@ const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls
             }
             hex.isHovered = true;
             hoveredHexagon.current = hex;
+            hex.loadHighQualityImage(); // Trigger HQ image load on hover
 
-            if (tooltipRef.current && hex.imageUrl) {
-              const information = info[hex.imageUrl] || '';
-              if (information || hex.image) {
+            // Update Tooltip Logic
+            if (tooltipRef.current && hex.originalImageUrl) {
+              const information = info[hex.originalImageUrl] || '';
+              // Use LQ image for tooltip for consistency and faster display
+              const imageToShowInTooltip = hex.imageLQ;
+              const imageUrlForTooltip = hex.originalImageUrl ? getLowQualityImageUrl(hex.originalImageUrl) : ''; // Use LQ URL for src
+
+              if (information || imageToShowInTooltip) {
                 tooltipRef.current.innerHTML = `
                   <div class="p-4">
-                    ${hex.image ? `
-                      <div class="mb-4">
-                        <img src="${hex.imageUrl}"
-                             alt="Product"
-                             style="width: ${popupImageSize}px;
+                    ${imageToShowInTooltip ? `
+                      <div class="mb-2">
+                        <div style="width: ${popupImageSize}px;
                                     height: ${popupImageSize}px;
-                                    object-fit: contain;
-                                    border-radius: 8px;
-                                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);"
-                        />
+                                    position: relative;
+                                    margin: 0 auto;">
+                          <div style="width: 100%;
+                                     height: 100%;
+                                     clip-path: polygon(50% 2%, 98% 26%, 98% 74%, 50% 98%, 2% 74%, 2% 26%);
+                                     background: rgba(0, 180, 180, 0.6);">
+                          </div>
+                          <div style="width: 100%;
+                                     height: 100%;
+                                     position: absolute;
+                                     top: 0;
+                                     left: 0;
+                                     clip-path: polygon(50% 2%, 98% 26%, 98% 74%, 50% 98%, 2% 74%, 2% 26%);
+                                     background-image: url('${imageUrlForTooltip}');
+                                     background-size: cover;
+                                     background-position: center;">
+                          </div>
+                        </div>
                       </div>
                     ` : ''}
                     ${information ? `<div class="text-sm leading-relaxed">${information}</div>` : ''}
@@ -261,7 +371,7 @@ const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls
       canvas.removeEventListener('mousemove', handleMouseMove);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [imageUrls, info]);
+  }, [imageUrls, info, productDetails]); // Update dependency array
 
   return (
     <>
@@ -269,6 +379,21 @@ const HexagonHeroBackground: React.FC<HexagonHeroBackgroundProps> = ({ imageUrls
         ref={canvasRef}
         className="absolute top-0 left-0 w-full h-full hexagon-background"
       />
+      {/* Tooltip Element */}
+      <div
+        ref={tooltipRef}
+        className="absolute z-50 hidden pointer-events-none"
+        style={{
+          transition: 'opacity 0.2s ease-in-out',
+          // Apply clip-path directly to the container.
+          // The background color is set on the inner div via innerHTML,
+          // so the clip-path should work correctly.
+          clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+          // We might need to adjust padding/size later if content gets cut off.
+        }}
+      >
+        {/* Content is set dynamically via innerHTML */}
+      </div>
     </>
   );
 };

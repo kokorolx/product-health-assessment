@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { uploadProductImage, createProductRecord } from '@/lib/storage';
+import { uploadProductImage, createProductRecord, updateProductImage } from '@/lib/storage';
 
 interface ImageUploadFormProps {
   isOpen: boolean;
   onClose: () => void;
+  productId?: string;
+  onSuccess?: (imageUrl: string) => void;
 }
 
-const ImageUploadForm = ({ isOpen, onClose }: ImageUploadFormProps) => {
+const ImageUploadForm = ({ isOpen, onClose, productId, onSuccess }: ImageUploadFormProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [productName, setProductName] = useState('');
@@ -54,30 +56,40 @@ const ImageUploadForm = ({ isOpen, onClose }: ImageUploadFormProps) => {
     setIsLoading(true);
 
     try {
-      // Validate inputs
       if (!selectedFile) {
         throw new Error('Please select an image file');
       }
-      if (!productName.trim()) {
-        throw new Error('Please enter a product name');
+
+      let image_url: string;
+
+      if (productId) {
+        // Update existing product's image
+        image_url = await updateProductImage(productId, selectedFile);
+        setSuccessMessage('Image updated successfully!');
+      } else {
+        // Create new product
+        if (!productName.trim()) {
+          throw new Error('Please enter a product name');
+        }
+        if (!category) {
+          throw new Error('Please select a category');
+        }
+
+        image_url = await uploadProductImage(selectedFile);
+        await createProductRecord({
+          product_name: productName,
+          category,
+          image_url,
+          health_score: healthScore,
+          suitable_for: suitableFor,
+        });
+        setSuccessMessage('Product created successfully!');
       }
-      if (!category) {
-        throw new Error('Please select a category');
+
+      if (onSuccess) {
+        onSuccess(image_url);
       }
 
-      // Upload image
-      const image_url = await uploadProductImage(selectedFile);
-
-      // Create product record
-      await createProductRecord({
-        product_name: productName,
-        category,
-        image_url,
-        health_score: healthScore,
-        suitable_for: suitableFor,
-      });
-
-      setSuccessMessage('Product created successfully!');
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -110,7 +122,9 @@ const ImageUploadForm = ({ isOpen, onClose }: ImageUploadFormProps) => {
           </button>
 
           <div className="p-6">
-            <h2 className="text-2xl font-bold mb-6">Upload Product Image</h2>
+            <h2 className="text-2xl font-bold mb-6">
+              {productId ? 'Update Product Image' : 'Upload Product Image'}
+            </h2>
 
             {/* Status Messages */}
             {error && (
@@ -151,74 +165,78 @@ const ImageUploadForm = ({ isOpen, onClose }: ImageUploadFormProps) => {
                 )}
               </div>
 
-              {/* Product Name */}
-              <div>
-                <label htmlFor="product_name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Name
-                </label>
-                <input
-                  type="text"
-                  id="product_name"
-                  value={productName}
-                  onChange={(e) => setProductName(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              {!productId && (
+                <>
+                  {/* Product Name */}
+                  <div>
+                    <label htmlFor="product_name" className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Name
+                    </label>
+                    <input
+                      type="text"
+                      id="product_name"
+                      value={productName}
+                      onChange={(e) => setProductName(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
 
-              {/* Category Selection */}
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select a category</option>
-                  <option value="detergent">Detergent</option>
-                  <option value="cleanser">Cleanser</option>
-                  <option value="soap">Soap</option>
-                  <option value="sanitizer">Sanitizer</option>
-                </select>
-              </div>
+                  {/* Category Selection */}
+                  <div>
+                    <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+                      Category
+                    </label>
+                    <select
+                      id="category"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a category</option>
+                      <option value="detergent">Detergent</option>
+                      <option value="cleanser">Cleanser</option>
+                      <option value="soap">Soap</option>
+                      <option value="sanitizer">Sanitizer</option>
+                    </select>
+                  </div>
 
-              {/* Health Score */}
-              <div>
-                <label htmlFor="health_score" className="block text-sm font-medium text-gray-700 mb-2">
-                  Health Score (0-100)
-                </label>
-                <input
-                  type="number"
-                  id="health_score"
-                  value={healthScore}
-                  onChange={(e) => setHealthScore(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                  min="0"
-                  max="100"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+                  {/* Health Score */}
+                  <div>
+                    <label htmlFor="health_score" className="block text-sm font-medium text-gray-700 mb-2">
+                      Health Score (0-100)
+                    </label>
+                    <input
+                      type="number"
+                      id="health_score"
+                      value={healthScore}
+                      onChange={(e) => setHealthScore(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                      min="0"
+                      max="100"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
 
-              {/* Suitable For */}
-              <div>
-                <label htmlFor="suitable_for" className="block text-sm font-medium text-gray-700 mb-2">
-                  Suitable For
-                </label>
-                <select
-                  id="suitable_for"
-                  value={suitableFor}
-                  onChange={(e) => setSuitableFor(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="General">General</option>
-                  <option value="Sensitive">Sensitive</option>
-                  <option value="Baby">Baby</option>
-                  <option value="Pets">Pets</option>
-                </select>
-              </div>
+                  {/* Suitable For */}
+                  <div>
+                    <label htmlFor="suitable_for" className="block text-sm font-medium text-gray-700 mb-2">
+                      Suitable For
+                    </label>
+                    <select
+                      id="suitable_for"
+                      value={suitableFor}
+                      onChange={(e) => setSuitableFor(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="General">General</option>
+                      <option value="Sensitive">Sensitive</option>
+                      <option value="Baby">Baby</option>
+                      <option value="Pets">Pets</option>
+                    </select>
+                  </div>
+                </>
+              )}
 
               {/* Submit Button */}
               <div className="flex justify-end">
@@ -229,7 +247,7 @@ const ImageUploadForm = ({ isOpen, onClose }: ImageUploadFormProps) => {
                     isLoading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  {isLoading ? 'Uploading...' : 'Submit'}
+                  {isLoading ? 'Uploading...' : (productId ? 'Update Image' : 'Submit')}
                 </button>
               </div>
             </form>

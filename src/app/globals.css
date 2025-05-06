@@ -350,6 +350,75 @@ body {
   animation-delay: 600ms;
 }
 
+/* Tech Stack Styles */
+.tech-stack-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tech-row {
+  display: flex;
+  gap: 4rem;
+  padding: 2rem 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.tech-row-content {
+  display: flex;
+  gap: 4rem;
+  animation: scrollX 30s linear infinite;
+}
+
+.tech-row-reverse .tech-row-content {
+  animation-direction: reverse;
+}
+
+.tech-icon-container {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  perspective: 1000px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease;
+}
+
+.tech-icon-container:hover {
+  transform: translateZ(20px) rotateX(10deg) rotateY(10deg);
+}
+
+.tech-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.tech-icon-container:hover .tech-icon {
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.2));
+  transform: scale(1.1);
+}
+
+@keyframes scrollX {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% - 4rem));
+  }
+}
+
+@media (max-width: 768px) {
+  .tech-row {
+    gap: 2rem;
+  }
+
+  .tech-row-content {
+    gap: 2rem;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in {

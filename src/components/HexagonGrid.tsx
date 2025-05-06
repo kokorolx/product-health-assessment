@@ -6,9 +6,60 @@ type MouseMoveHandler = (e: MouseEvent) => void;
 
 const HexagonGrid: React.FC = () => {
   const [activeHexagons, setActiveHexagons] = useState<Set<string>>(new Set());
+  const [hoveredHexagon, setHoveredHexagon] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [autoMoveEnabled, setAutoMoveEnabled] = useState(true);
+  const [loadedHighQualityImages, setLoadedHighQualityImages] = useState<Set<number>>(new Set());
+
+  const transformImageUrl = (url: string, { width, quality }: { width: number, quality: number }) => {
+    if (!url) return url;
+
+    try {
+      // Format: https://[project-ref].supabase.co/storage/v1/render/image/public/[bucket]/[file-path]
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+
+      // Check if this is a storage URL
+      if (!pathname.includes('/storage/v1/object/public/')) return url;
+
+      // Convert object path to render path
+      const newPathname = pathname
+        .replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+
+      // Construct transform URL
+      const transformUrl = `${urlObj.origin}${newPathname}?width=${width}&quality=${quality}`;
+      console.log('Transform URL:', transformUrl);
+      return transformUrl;
+
+    } catch (error) {
+      console.error('Error transforming URL:', error);
+      return url;
+    }
+  };
+
+  const getLowQualityImageUrl = (url: string) => {
+    return transformImageUrl(url, { width: 100, quality: 60 });
+  };
+
+  const getHighQualityImageUrl = (url: string) => {
+    return transformImageUrl(url, { width: 1200, quality: 100 });
+  };
+
+  const preloadImage = (index: number, url: string) => {
+    if (!loadedHighQualityImages.has(index)) {
+      console.log('Preloading image for index:', index, url);
+      const img = document.createElement('img');
+      img.src = url;
+      img.onload = () => {
+        console.log('High quality image loaded:', url);
+        setLoadedHighQualityImages(prev => new Set([...prev, index]));
+      };
+      img.onerror = (error) => {
+        console.error('Error loading high quality image:', error);
+      };
+    }
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -140,18 +191,66 @@ const HexagonGrid: React.FC = () => {
               gridRow: row + 1,
               gridColumn: col + 1,
               transform: isEvenRow ? 'translateX(50%)' : undefined,
-              backgroundImage: product ? `url(${product.image_url})` : undefined,
+              backgroundImage: product ? `url(${getLowQualityImageUrl(product.image_url)})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
             data-index={i}
+            onMouseEnter={() => {
+              if (product) {
+                console.log('Product URL:', product.image_url);
+                const highQualityUrl = getHighQualityImageUrl(product.image_url);
+                console.log('Loading high quality image:', highQualityUrl);
+                setHoveredHexagon(i);
+                preloadImage(i, highQualityUrl);
+              }
+            }}
+            onMouseLeave={() => setHoveredHexagon(null)}
           >
             {product && (
-              <div className="hexagon-content">
-                <div className="product-info">
-                  <span className="product-score">{product.health_score}</span>
+              <>
+                <div className="hexagon-content">
+                  <div className="product-info">
+                    <span className="product-score">{product.health_score}</span>
+                  </div>
                 </div>
-              </div>
+                {hoveredHexagon === i && loadedHighQualityImages.has(i) && (
+                  <div
+                    className="high-quality-image hexagon-clip"
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundImage: `url(${getHighQualityImageUrl(product.image_url)})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      opacity: 0,
+                      animation: 'fadeIn 0.3s ease-in-out forwards',
+                      zIndex: 1,
+                      transform: isEvenRow ? 'translateX(50%)' : undefined
+                    }}
+                  />
+                )}
+                <style jsx>{`
+                  @keyframes fadeIn {
+                    0% {
+                      opacity: 0;
+                      filter: blur(5px);
+                    }
+                    100% {
+                      opacity: 1;
+                      filter: blur(0);
+                    }
+                  }
+
+                  .hexagon-clip {
+                    -webkit-clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+                    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+                  }
+                `}</style>
+              </>
             )}
           </div>
         );

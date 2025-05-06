@@ -87,3 +87,48 @@ export async function createProductRecord(productData: ProductData): Promise<voi
     throw error;
   }
 }
+
+export async function updateProductImage(productId: string, file: File): Promise<string> {
+  try {
+    const timestamp = new Date().getTime();
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${timestamp}-${file.name.split('.')[0]}.${fileExt}`;
+
+    // Upload file to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(fileName, file, {
+        contentType: file.type
+      });
+
+    if (error) {
+      console.error('Error uploading image:', error);
+      throw new Error('Failed to upload image');
+    }
+
+    if (!data) {
+      throw new Error('No data returned from upload');
+    }
+
+    // Get the public URL for the uploaded file
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(data.path);
+
+    // Update the product record with the new image URL
+    const { error: updateError } = await supabase
+      .from('product_health_assessments')
+      .update({ image_url: publicUrl })
+      .eq('id', productId);
+
+    if (updateError) {
+      console.error('Error updating product record:', updateError);
+      throw new Error('Failed to update product record');
+    }
+
+    return publicUrl;
+  } catch (error) {
+    console.error('Error in updateProductImage:', error);
+    throw error;
+  }
+}
