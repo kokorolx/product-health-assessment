@@ -5,7 +5,7 @@ import Image from 'next/image';
 import RoadmapSection from '@/components/RoadmapSection';
 import React, { useState, useEffect } from 'react';
 import HexagonHeroBackground from '@/components/HexagonHeroBackground';
-import { getInitialProducts } from '@/lib/data';
+import { getProducts } from '@/lib/data';
 import { Product } from '@/types';
 
 type ProductDetailsMap = { [key: string]: { health_score: number; [key: string]: unknown } };
@@ -41,7 +41,8 @@ export function HomePage({ techStack }: HomePageProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const products: Product[] = await getInitialProducts();
+        // TODO: Implement pagination for HomePage background if needed, for now fetching first page
+        const products: Product[] = await getProducts(1, 30); // Fetch 30 items for background
 
         const urls: string[] = [];
         const detailsMap: ProductDetailsMap = {};

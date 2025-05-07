@@ -1,12 +1,13 @@
-import { getInitialProducts } from '@/lib/data'
+import { getProducts } from '@/lib/data'
 import ProductView from '@/components/ProductView'
 
 export default async function ProductsPage() {
-  const products = await getInitialProducts()
+  // Fetch the first page of products initially
+  const initialProducts = await getProducts(1)
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <ProductView initialProducts={products} />
+      <ProductView initialProducts={initialProducts} />
     </div>
   )
 }

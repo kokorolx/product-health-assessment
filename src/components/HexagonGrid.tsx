@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getInitialProducts } from '@/lib/data';
+import { getProducts } from '@/lib/data';
 import { Product } from '@/types';
 
 type MouseMoveHandler = (e: MouseEvent) => void;
@@ -64,7 +64,8 @@ const HexagonGrid: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const productData = await getInitialProducts();
+        // TODO: Implement pagination for HexagonGrid if needed, for now fetching first page
+        const productData = await getProducts(1, 30); // Fetch 30 items for the grid
         setProducts(productData);
       } catch (error) {
         console.error('Error fetching products:', error);

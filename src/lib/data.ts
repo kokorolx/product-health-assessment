@@ -1,13 +1,16 @@
 import { DetailedProduct } from '@/types';
 import { supabase } from './supabaseClient';
 
-export async function getInitialProducts(): Promise<DetailedProduct[]> {
+const DEFAULT_LIMIT = 20;
+
+export async function getProducts(page: number = 1, limit: number = DEFAULT_LIMIT): Promise<DetailedProduct[]> {
   try {
+    const offset = (page - 1) * limit;
     const { data, error } = await supabase
       .from('product_health_assessments')
       .select('*')
-      .limit(20)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Error fetching products:', error);
@@ -25,11 +28,13 @@ export async function getInitialProducts(): Promise<DetailedProduct[]> {
   }
 }
 
-export async function getFilteredProducts(activeFilters: string[]): Promise<DetailedProduct[]> {
+export async function getFilteredProducts(activeFilters: string[], page: number = 1, limit: number = DEFAULT_LIMIT): Promise<DetailedProduct[]> {
   try {
-    // If no filters are active, return initial products
+    const offset = (page - 1) * limit;
+
+    // If no filters are active, return paginated products
     if (activeFilters.length === 0) {
-      return getInitialProducts();
+      return getProducts(page, limit);
     }
 
     // Start building the query
@@ -77,7 +82,9 @@ export async function getFilteredProducts(activeFilters: string[]): Promise<Deta
     }
 
     // Execute the query
-    const { data, error } = await query;
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Error fetching filtered products:', error);

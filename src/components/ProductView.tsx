@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { DetailedProduct } from '@/types';
 import FilterBar from './FilterBar';
 import ProductGrid from './ProductGrid';
@@ -13,16 +13,29 @@ interface ProductViewProps {
 }
 
 const ProductView = ({ initialProducts }: ProductViewProps) => {
-  const [state, setState] = useState({
-    products: initialProducts,
-    activeFilters: [] as string[],
-    isLoading: false,
-    error: null as string | null,
-    selectedProduct: null as DetailedProduct | null,
-    isModalOpen: false,
-  });
+  const [products, setProducts] = useState<DetailedProduct[]>(initialProducts);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<DetailedProduct | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
-  // Derive available filters from initial products
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastProductElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (isLoadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMore();
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [isLoadingMore, hasMore]);
+
+  // Derive available filters from initial products (Note: This only uses initial products. Consider fetching all possible filters separately if needed)
   const availableFilters = [
     // Categories
     ...Array.from(new Set(initialProducts
@@ -35,54 +48,77 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
   ].sort();
 
   const handleFilterClick = (filter: string) => {
-    setState(prev => {
-      const activeFilters = prev.activeFilters.includes(filter)
-        ? prev.activeFilters.filter(f => f !== filter)
-        : [...prev.activeFilters, filter];
-      return { ...prev, activeFilters };
-    });
+    setActiveFilters(prev =>
+      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
+    );
+    setProducts([]); // Clear products immediately for filter change
+    setIsLoading(true); // Set loading state for filter change
+    setCurrentPage(1); // Reset page number
+    setHasMore(true); // Reset hasMore flag
   };
 
   const handleClearFilters = () => {
-    setState(prev => ({ ...prev, activeFilters: [] }));
+    setActiveFilters([]);
+    setProducts([]); // Clear products
+    setIsLoading(true); // Set loading state for filter change
+    setCurrentPage(1); // Reset page number
+    setHasMore(true); // Reset hasMore flag
   };
 
-  // Fetch filtered products when filters change
+  // Fetch filtered products when filters change (or initial load)
   useEffect(() => {
+    console.log('Current activeFilters:', activeFilters); // Diagnostic log
+
     const fetchFilteredProducts = async () => {
-      setState(prev => ({ ...prev, isLoading: true, error: null }));
+      setIsLoading(true);
+      setError(null);
       try {
-        const filteredProducts = await getFilteredProducts(state.activeFilters);
-        setState(prev => ({ ...prev, products: filteredProducts, isLoading: false }));
+        const filteredProducts = await getFilteredProducts(activeFilters, 1);
+        setProducts(filteredProducts);
+        setHasMore(filteredProducts.length === 20); // Using DEFAULT_LIMIT from data.ts
+        setIsLoading(false);
       } catch (err) {
         console.error('Error fetching filtered products:', err);
-        setState(prev => ({
-          ...prev,
-          error: 'Failed to fetch filtered products',
-          isLoading: false
-        }));
+        setError('Failed to fetch filtered products');
+        setIsLoading(false);
       }
     };
 
     fetchFilteredProducts();
-  }, [state.activeFilters]);
+  }, [activeFilters]);
+
+  const loadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const moreProducts = await getFilteredProducts(activeFilters, nextPage);
+
+      if (moreProducts.length === 0) {
+        setHasMore(false);
+      } else {
+        setProducts(prev => [...prev, ...moreProducts]);
+        setCurrentPage(nextPage);
+        setHasMore(moreProducts.length === 20); // Using DEFAULT_LIMIT from data.ts
+      }
+    } catch (err) {
+      console.error('Error loading more products:', err);
+      setError('Failed to load more products');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const handleProductClick = (product: DetailedProduct) => {
-    setState(prev => ({
-      ...prev,
-      selectedProduct: product,
-      isModalOpen: true
-    }));
+    setSelectedProduct(product);
+    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setState(prev => ({
-      ...prev,
-      selectedProduct: null,
-      isModalOpen: false
-    }));
+    setSelectedProduct(null);
+    setIsModalOpen(false);
   };
-
 
   return (
     <>
@@ -90,29 +126,43 @@ const ProductView = ({ initialProducts }: ProductViewProps) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <FilterBar
           availableFilters={availableFilters}
-          activeFilters={state.activeFilters}
+          activeFilters={activeFilters}
           onFilterClick={handleFilterClick}
           onClearFilters={handleClearFilters}
         />
 
         <div className="mt-8">
-          {state.error && (
+          {error && (
             <div className="text-red-600 mb-4" role="alert">
-              {state.error}
+              {error}
             </div>
           )}
-          {state.isLoading ? (
+          {isLoading ? (
             <div className="flex justify-center items-center min-h-[200px]">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             </div>
           ) : (
             <>
-              <ProductGrid products={state.products} onProductClick={handleProductClick} />
-              {state.selectedProduct && (
+              <ProductGrid
+                products={products}
+                onProductClick={handleProductClick}
+                lastProductElementRef={lastProductElementRef}
+              />
+              {isLoadingMore && (
+                <div className="flex justify-center items-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              )}
+              {!hasMore && products.length > 0 && (
+                <div className="text-center text-gray-600 py-4">
+                  No more products to load
+                </div>
+              )}
+              {selectedProduct && (
                 <ProductModal
-                  isOpen={state.isModalOpen}
+                  isOpen={isModalOpen}
                   onClose={handleCloseModal}
-                  product={state.selectedProduct}
+                  product={selectedProduct}
                 />
               )}
             </>
