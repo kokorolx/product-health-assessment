@@ -67,7 +67,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
         const cardElement = (
           <div key={product.id || `product-${index}`}>
             <ProductCard
-              {...product}
+              product={product}
               onClick={() => onProductClick(product)}
             />
           </div>

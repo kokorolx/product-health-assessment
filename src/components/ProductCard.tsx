@@ -2,18 +2,19 @@ import Image from 'next/image';
 import HealthScoreIndicator from './HealthScoreIndicator';
 import { Product } from '../types';
 
-interface ProductCardProps extends Product {
-  onClick: () => void;
+interface ProductCardProps {
+  product: Product;
+  onClick?: () => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({
-  image_url,
-  product_name,
-  health_score,
-  category,
-  suitable_for,
-  onClick,
-}) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
+  const {
+    image_url,
+    product_name,
+    health_score,
+    category,
+    suitable_for,
+  } = product;
   return (
     <div
       className="relative rounded shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group aspect-[3/2] bg-slate-200" // Added aspect ratio, group for hover

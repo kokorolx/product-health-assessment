@@ -160,3 +160,35 @@ export async function getFilteredProducts(activeFilters: string[], page: number 
     throw error;
   }
 }
+
+export async function searchProductsByName(query: string): Promise<DetailedProduct[]> {
+  try {
+    const { data, error } = await supabase
+      .from('product_health_assessments')
+      .select('*')
+      .ilike('product_name', `%${query}%`)
+      .limit(10)
+      .order('health_score', { ascending: false });
+
+    if (error) {
+      console.error('Error searching products:', error);
+      throw error;
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    // Filter out products without valid names or images
+    const filteredData = data.filter(product => {
+      const hasValidName = product.product_name != null && product.product_name.trim() !== '';
+      const hasValidImage = product.image_url != null && product.image_url.trim() !== '';
+      return hasValidName && hasValidImage;
+    });
+
+    return filteredData as DetailedProduct[];
+  } catch (error) {
+    console.error('Error searching products:', error);
+    throw error;
+  }
+}
