@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import RoadmapSection from '@/components/RoadmapSection';
+// import RoadmapSection from '@/components/RoadmapSection'; // Removed import
 import React, { useState, useEffect } from 'react';
 import HexagonHeroBackground from '@/components/HexagonHeroBackground';
 import { getProducts } from '@/lib/data';
@@ -216,8 +216,8 @@ export function HomePage({ techStack }: HomePageProps) {
         </div>
       </section>
 
-      {/* Roadmap Section */}
-      <RoadmapSection />
+      {/* Roadmap Section - Removed */}
+      {/* <RoadmapSection /> */}
 
       {/* Footer */}
       <footer className="py-12 relative overflow-hidden">

@@ -6,7 +6,7 @@ export default async function ProductsPage() {
   const initialProducts = await getProducts(1)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-slate-900 bg-gray-50">
       <ProductView initialProducts={initialProducts} />
     </div>
   )

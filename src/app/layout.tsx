@@ -74,16 +74,17 @@ export default function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
-        <footer className="mt-auto py-8 bg-gray-50 relative z-50">
+        {/* Footer with updated dark theme styling to match filter sidebar */}
+        <footer className="mt-auto py-8 bg-slate-900 text-slate-400 relative z-50"> {/* Changed to bg-slate-900 */}
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-gray-600">
+              <div className="text-slate-400"> {/* Ensure copyright text also uses the new color */}
                 © {new Date().getFullYear()} Lê Hoàng Tâm
               </div>
               <div className="flex gap-6">
                 <a
                   href="https://thnkandgrow.com"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-slate-400 hover:text-slate-200 transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -91,7 +92,7 @@ export default function RootLayout({
                 </a>
                 <a
                   href="https://blog.thnkandgrow.com"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-slate-400 hover:text-slate-200 transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -99,7 +100,7 @@ export default function RootLayout({
                 </a>
                 <a
                   href="https://github.com/kokorolx"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                  className="text-slate-400 hover:text-slate-200 transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

@@ -16,48 +16,30 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   return (
     <div
-      className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer group"
+      className="relative rounded shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group aspect-[3/2] bg-slate-200" // Added aspect ratio, group for hover
       onClick={onClick}
     >
       {/* Product Image */}
-      <div className="w-full h-48 relative">
-        <Image
-          src={image_url}
-          alt={product_name}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover"
-        />
-      </div>
+      <Image
+        src={image_url}
+        alt={product_name}
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        className="object-cover transition-transform duration-300 group-hover:scale-105" // Slight zoom on hover
+      />
 
-      {/* Product Info */}
-      <div className="p-4">
-        {/* Name and Score */}
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-gray-800 truncate">{product_name}</h3>
+
+      {/* Info Overlay: Hidden by default, shown on hover */}
+      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-70 transition-all duration-300 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100">
+        <h3 className="text-lg font-semibold text-white truncate mb-1">{product_name}</h3>
+        <div className="flex items-center justify-between mb-2">
           <HealthScoreIndicator score={health_score} />
         </div>
-
-        {/* Badges */}
-        <div className="space-y-2">
-          {/* Category */}
-          <div className="flex flex-wrap gap-1">
-            <span
-              className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-800"
-            >
-              {category}
-            </span>
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-slate-200 space-x-2">
+            <span className="bg-slate-500/50 px-2 py-0.5 rounded">{category}</span>
+            <span className="bg-indigo-500/50 px-2 py-0.5 rounded">{suitable_for}</span>
           </div>
-
-          {/* Suitable For */}
-          <div className="flex flex-wrap gap-1">
-            <span
-              className="px-2 py-1 text-xs rounded bg-purple-100 text-purple-800"
-            >
-              {suitable_for}
-            </span>
-          </div>
-
         </div>
       </div>
     </div>

@@ -30,17 +30,17 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Modal backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-30 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm transition-opacity" // Increased opacity, added backdrop-blur
         onClick={onClose}
       />
 
       {/* Modal content */}
       <div className="relative min-h-screen flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="relative bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100"> {/* Enhanced shadow, rounded-xl, scrollbar */}
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 text-gray-400 hover:text-gray-500"
+            className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors"
           >
             <span className="sr-only">Close</span>
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,11 +49,11 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
           </button>
 
           {/* Content */}
-          <div className="p-6">
+          <div className="p-6 md:p-8"> {/* Increased padding */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
               {/* Left column - Image */}
               <div className="flex items-center justify-center">
-                <div className="w-full max-w-sm aspect-[4/3] relative">
+                <div className="w-full max-w-sm aspect-[4/3] relative rounded-lg overflow-hidden shadow-md">
                   <MagnifyingGlass
                     src={product.image_url}
                     alt={product.product_name}
@@ -65,24 +65,24 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
               </div>
 
               {/* Right column - Details */}
-              <div>
-                <h2 className="text-2xl font-bold mb-2">
+              <div className="text-slate-700"> {/* Default text color for this section */}
+                <h2 className="text-3xl font-bold mb-3 text-slate-900"> {/* Larger, bolder title */}
                   {product.product_name}
                 </h2>
-                <div className="text-gray-600 mb-4">
-                  <p>Category: {product.category}</p>
-                  <p className="mt-1">Suitable for: {product.suitable_for}</p>
+                <div className="text-slate-600 mb-6"> {/* Slightly lighter text for meta info */}
+                  <p><span className="font-medium text-slate-700">Category:</span> {product.category}</p>
+                  <p className="mt-1"><span className="font-medium text-slate-700">Suitable for:</span> {product.suitable_for}</p>
                 </div>
 
                 {/* Source URL */}
                 {product.source_url && (
-                  <div className="mb-4">
-                    <div className="font-semibold">Source</div>
+                  <div className="mb-5">
+                    <div className="font-semibold text-slate-800">Source</div>
                     <a
                       href={product.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-blue-600 hover:text-blue-700 transition-colors"
                     >
                       View Original
                     </a>
@@ -90,68 +90,68 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
                 )}
 
                 {/* Health Score */}
-                <div className="mb-4">
-                  <div className="font-semibold">Health Score</div>
-                  <div className="mt-1">{product.health_score}/100</div>
+                <div className="mb-5">
+                  <div className="font-semibold text-slate-800">Health Score</div>
+                  <div className="mt-1 text-lg">{product.health_score}/100</div>
                 </div>
 
                 {/* Ingredients */}
-                <div className="mb-4">
-                  <div className="font-semibold">Ingredients</div>
-                  <pre className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
+                <div className="mb-5">
+                  <div className="font-semibold text-slate-800">Ingredients</div>
+                  <pre className="text-sm text-slate-600 mt-1 whitespace-pre-wrap bg-slate-50 p-3 rounded-md"> {/* Added background to pre */}
                     {JSON.stringify(product.ingredients, null, 2)}
                   </pre>
                 </div>
 
                 {/* Suitability Notes */}
                 {product.suitability_notes && (
-                  <div className="mb-4">
-                    <div className="font-semibold">Suitability Notes</div>
-                    <div className="mt-1">
+                  <div className="mb-5">
+                    <div className="font-semibold text-slate-800">Suitability Notes</div>
+                    <div className="mt-1 prose prose-sm max-w-none"> {/* Using prose for better typography */}
                       <SuitabilityNotes notes={product.suitability_notes} />
                     </div>
                   </div>
                 )}
 
                 {/* Summary */}
-                <div className="mb-4">
-                  <div className="font-semibold">Summary</div>
-                  <p className="text-sm text-gray-600 mt-1">{product.summary}</p>
+                <div className="mb-5">
+                  <div className="font-semibold text-slate-800">Summary</div>
+                  <p className="text-sm text-slate-600 mt-1">{product.summary}</p>
                 </div>
 
                 {/* Careful Note */}
                 {product.careful_note && (
-                  <div className="mb-4">
-                    <div className="font-semibold">Careful Note</div>
-                    <p className="text-sm text-gray-600 mt-1">{product.careful_note}</p>
+                  <div className="mb-5">
+                    <div className="font-semibold text-slate-800">Careful Note</div>
+                    <p className="text-sm text-slate-600 mt-1">{product.careful_note}</p>
                   </div>
                 )}
 
                 {/* Detailed Reason */}
                 {product.detailed_reason && (
-                  <div className="mb-4">
-                    <div className="font-semibold">Detailed Reason</div>
-                    <p className="text-sm text-gray-600 mt-1">{product.detailed_reason}</p>
+                  <div className="mb-5">
+                    <div className="font-semibold text-slate-800">Detailed Reason</div>
+                    <p className="text-sm text-slate-600 mt-1">{product.detailed_reason}</p>
                   </div>
                 )}
 
                 {/* AI Disclaimer */}
-                <div className="mt-4 p-2 bg-orange-50 border border-orange-200 rounded-lg text-xs text-orange-700">
+                <div className="mt-6 p-3 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800"> {/* Changed to amber for softer warning */}
                   <p>
                     <strong>Disclaimer:</strong> Information generated by AI may contain inaccuracies. Verify critical details.
                   </p>
                 </div>
 
                 {/* Review Status & Creation Date */}
-                <div className="text-sm text-gray-500 mt-6">
+                <div className="text-xs text-slate-500 mt-6"> {/* Smaller text for footer info */}
                   <div className="flex gap-2 mb-2">
-                    <span className={`px-2 py-1 rounded ${
-                      product.reviewed_by_ai ? 'bg-blue-100 text-blue-800' : 'bg-gray-100'
+                    <span className={`px-2 py-1 rounded-full text-xs ${ // rounded-full for pill shape
+                      product.reviewed_by_ai ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
                     }`}>
                       AI Reviewed
                     </span>
-                    <span className={`px-2 py-1 rounded ${
-                      product.reviewed_by_human ? 'bg-green-100 text-green-800' : 'bg-gray-100'
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      product.reviewed_by_human ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'
                     }`}>
                       Human Reviewed
                     </span>

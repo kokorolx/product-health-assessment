@@ -28,6 +28,58 @@ export async function getProducts(page: number = 1, limit: number = DEFAULT_LIMI
   }
 }
 
+export async function getUniqueCategories(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('product_health_assessments')
+      .select('category');
+
+    if (error) {
+      console.error('Error fetching unique categories:', error);
+      throw error;
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    const categories = data
+      .map(item => item.category)
+      .filter(category => category !== null && category !== undefined && category.trim() !== '');
+
+    return Array.from(new Set(categories)).sort();
+  } catch (error) {
+    console.error('Error fetching unique categories:', error);
+    throw error;
+  }
+}
+
+export async function getUniqueSuitableFor(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('product_health_assessments')
+      .select('suitable_for');
+
+    if (error) {
+      console.error('Error fetching unique suitable_for values:', error);
+      throw error;
+    }
+
+    if (!data) {
+      return [];
+    }
+
+    const suitableForValues = data
+      .map(item => item.suitable_for)
+      .filter(value => value !== null && value !== undefined && value.trim() !== '');
+
+    return Array.from(new Set(suitableForValues)).sort();
+  } catch (error) {
+    console.error('Error fetching unique suitable_for values:', error);
+    throw error;
+  }
+}
+
 export async function getFilteredProducts(activeFilters: string[], page: number = 1, limit: number = DEFAULT_LIMIT): Promise<DetailedProduct[]> {
   try {
     const offset = (page - 1) * limit;
@@ -95,7 +147,14 @@ export async function getFilteredProducts(activeFilters: string[], page: number 
       return [];
     }
 
-    return data as DetailedProduct[];
+    // Keep products that have both a valid product_name AND a valid image_url
+    const filteredData = data.filter(product => {
+      const hasValidName = product.product_name != null && product.product_name.trim() !== '';
+      const hasValidImage = product.image_url != null && product.image_url.trim() !== '';
+      return hasValidName && hasValidImage;
+    });
+
+    return filteredData as DetailedProduct[];
   } catch (error) {
     console.error('Error fetching filtered products:', error);
     throw error;

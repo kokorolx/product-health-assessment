@@ -1,46 +1,89 @@
 import ProductCard from './ProductCard';
 import { DetailedProduct } from '@/types';
-import React from 'react'; // Import React for RefCallback
+import React from 'react';
+import ProductCardSkeleton from './ProductCardSkeleton';
+import Masonry from 'react-masonry-css';
 
 interface ProductGridProps {
   products: DetailedProduct[];
   onProductClick: (product: DetailedProduct) => void;
-  lastProductElementRef?: (node: HTMLDivElement | null) => void; // Optional ref callback
+  lastProductElementRef?: (node: HTMLDivElement | null) => void;
+  isLoading?: boolean;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ products, onProductClick, lastProductElementRef }) => {
-  if (!products || products.length === 0) {
+const ProductGrid: React.FC<ProductGridProps> = ({
+  products,
+  onProductClick,
+  lastProductElementRef,
+  isLoading = false,
+}) => {
+  // Breakpoint object for responsive layout
+  const breakpointColumns = {
+    default: 5, // Default column count
+    2400: 6,    // 2xl screens
+    1920: 5,    // xl screens
+    1536: 4,    // lg screens
+    1280: 3,    // md screens
+    768: 2,     // sm screens
+    640: 1      // xs screens
+  };
+
+  // Base styles for the masonry grid
+  const masonryClassName = `
+    masonry-grid
+    flex w-auto p-4
+    [&>div]:pl-1
+    [&>div]:bg-clip-padding
+    [&>div>div]:mb-1
+  `;
+
+  if (isLoading) {
     return (
-      <div className="text-center py-10 text-gray-500">
-        No products found. Try adjusting your filters or check back later.
-      </div>
+      <Masonry
+        breakpointCols={breakpointColumns}
+        className={masonryClassName}
+        columnClassName="masonry-grid_column"
+      >
+        {Array.from({ length: 12 }).map((_, index) => (
+          <div key={`skeleton-${index}`}>
+            <ProductCardSkeleton />
+          </div>
+        ))}
+      </Masonry>
     );
   }
 
+  if (!products || products.length === 0) {
+    return null;
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 p-4">
+    <Masonry
+      breakpointCols={breakpointColumns}
+      className={masonryClassName}
+      columnClassName="masonry-grid_column"
+    >
       {products.map((product, index) => {
-        if (products.length === index + 1 && lastProductElementRef) {
-          // Attach ref to the last product card
-          return (
-            <div key={product.id || index} ref={lastProductElementRef}>
-              <ProductCard
-                {...product}
-                onClick={() => onProductClick(product)}
-              />
-            </div>
-          );
-        } else {
-          return (
+        const cardElement = (
+          <div key={product.id || `product-${index}`}>
             <ProductCard
-              key={product.id || index}
               {...product}
               onClick={() => onProductClick(product)}
             />
+          </div>
+        );
+
+        if (products.length === index + 1 && lastProductElementRef) {
+          return (
+            <div ref={lastProductElementRef} key={product.id || `product-${index}`}>
+              {cardElement}
+            </div>
           );
         }
+
+        return cardElement;
       })}
-    </div>
+    </Masonry>
   );
 };
 
