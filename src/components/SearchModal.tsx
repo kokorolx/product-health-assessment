@@ -19,7 +19,7 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
   // Debounce search query
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer2 = setTimeout(() => {
       setDebouncedQuery(searchQuery);
     }, 300);
 
