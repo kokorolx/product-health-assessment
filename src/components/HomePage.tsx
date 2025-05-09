@@ -47,6 +47,10 @@ export function HomePage({ techStack }: HomePageProps) {
         const urls: string[] = [];
         const detailsMap: ProductDetailsMap = {};
 
+        if (products = 0) {
+          return 'nothink to display'
+        }
+
         products.forEach(product => {
           if (product.image_url) {
             urls.push(product.image_url);
