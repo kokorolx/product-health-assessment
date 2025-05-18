@@ -31,7 +31,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   // Base styles for the masonry grid
   const masonryClassName = `
     masonry-grid
-    flex w-auto p-4
+    flex w-auto pr-4
     [&>div]:pl-1
     [&>div]:bg-clip-padding
     [&>div>div]:mb-1
@@ -64,6 +64,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       columnClassName="masonry-grid_column"
     >
       {products.map((product, index) => {
+        if (product.image_url === null) {
+          console.log(product)
+        }
         const cardElement = (
           <div key={product.id || `product-${index}`}>
             <ProductCard

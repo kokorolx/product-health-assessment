@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 
 interface MagnifyingGlassProps {
-  src: string;
+  src: string | null;
   alt: string;
   width: number;
   height: number;
@@ -36,12 +36,19 @@ const MagnifyingGlass: React.FC<MagnifyingGlassProps> = ({
     >
       {/* Original Image */}
       <Image
-        src={src}
-        alt={alt}
+        src={src || '/something-went-wrong.png'}
+        alt={src ? alt : 'Product not available'}
         fill
-        className="object-cover"
+        className={`object-cover ${!src ? 'opacity-70' : ''}`}
         sizes={`${width}px`}
       />
+      {!src && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-slate-600 text-sm font-medium bg-white/80 px-3 py-1 rounded-md">
+            Product not available
+          </p>
+        </div>
+      )}
 
       {/* Magnified View */}
       {showMagnifier && (
@@ -68,10 +75,10 @@ const MagnifyingGlass: React.FC<MagnifyingGlassProps> = ({
             className="absolute"
           >
             <Image
-              src={src}
-              alt={`${alt} magnified`}
+              src={src || '/something-went-wrong.png'}
+              alt={src ? `${alt} magnified` : 'Product not available - magnified'}
               fill
-              className="object-cover"
+              className={`object-cover ${!src ? 'opacity-70' : ''}`}
               sizes={`${width * magnification}px`}
               quality={90}
               priority

@@ -21,8 +21,8 @@ const HealthScoreIndicator: React.FC<HealthScoreIndicatorProps> = ({ score }) =>
           text-white
           font-semibold
           rounded-full
-          w-12
-          h-12
+          w-10
+          h-10
           flex
           items-center
           justify-center

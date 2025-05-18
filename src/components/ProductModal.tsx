@@ -40,7 +40,7 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition-colors"
+            className="absolute right-2 top-2 p-3 text-slate-400 hover:text-slate-600 bg-black/20 hover:bg-black/30 rounded-full transition-all z-[51]"
           >
             <span className="sr-only">Close</span>
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,9 +50,9 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
 
           {/* Content */}
           <div className="p-6 md:p-8"> {/* Increased padding */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <div className={`grid ${(!product.image_url || !product.image_url.trim()) ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-8 items-start`}>
               {/* Left column - Image */}
-              <div className="flex items-center justify-center">
+              <div className={`flex items-center justify-center ${(!product.image_url || !product.image_url.trim()) ? 'max-w-2xl mx-auto' : ''}`}>
                 <div className="w-full max-w-sm aspect-[4/3] relative rounded-lg overflow-hidden shadow-md">
                   <MagnifyingGlass
                     src={product.image_url}
@@ -65,7 +65,8 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
               </div>
 
               {/* Right column - Details */}
-              <div className="text-slate-700"> {/* Default text color for this section */}
+              {(product.image_url && product.image_url.trim()) && (
+                <div className="text-slate-700"> {/* Default text color for this section */}
                 <h2 className="text-3xl font-bold mb-3 text-slate-900"> {/* Larger, bolder title */}
                   {product.product_name}
                 </h2>
@@ -159,7 +160,8 @@ const ProductModal = ({ isOpen, onClose, product }: ProductModalProps) => {
                   Created: {new Date(product.created_at).toLocaleDateString()}
                 </div>
               </div>
-            </div>
+            )}
+          </div>
           </div>
         </div>
       </div>

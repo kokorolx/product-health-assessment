@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  icons: {
+    icon: '/logo.png',
+  },
   title: "Product Health Assessment | thnkandgrow",
   description: "Transform your product's technical foundation with our comprehensive health assessment tool. Get actionable insights and optimize your tech stack for peak performance.",
   authors: [{ name: "Lê Hoàng Tâm" }],
