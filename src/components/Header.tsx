@@ -11,21 +11,20 @@ const Header = ({ onUploadClick, showTelegramButton }: HeaderProps) => {
     <header className="bg-white px-6 shadow-md sticky top-0 z-50 h-16 flex items-center"> {/* Explicit h-16, flex items-center for vertical alignment */}
       <div className="max-w-7xl mx-auto flex justify-between items-center w-full"> {/* w-full for inner container */}
         <div className="flex items-center gap-3"> {/* Container for logo and title */}
-          <Link href="/" legacyBehavior>
-            <a aria-label="Go to homepage">
-              <Image
-                src="/logo.png" // Path relative to /public
-                alt="Site Logo"
-                width={40} // Adjust width as needed, maintaining aspect ratio
-                height={40} // Adjust height as needed, maintaining aspect ratio
-                className="h-10 w-10" // Tailwind classes for size, ensure h-16 on header is respected
-              />
-            </a>
+          <Link href="/" aria-label="Go to homepage">
+            <Image
+              src="/logo.png" // Path relative to /public
+              alt="Site Logo"
+              width={40} // Adjust width as needed, maintaining aspect ratio
+              height={40} // Adjust height as needed, maintaining aspect ratio
+              className="h-10 w-10" // Tailwind classes for size, ensure h-16 on header is respected
+            />
           </Link>
-          <Link href="/" legacyBehavior>
-            <a className="text-2xl font-bold text-slate-800 hover:text-blue-600 transition-colors">
-              Product Health Assessment
-            </a>
+          <Link
+            href="/"
+            className="text-2xl font-bold text-slate-800 hover:text-blue-600 transition-colors"
+          >
+            Product Health Assessment
           </Link>
         </div>
         <div className="flex items-center gap-4"> {/* Container for buttons */}

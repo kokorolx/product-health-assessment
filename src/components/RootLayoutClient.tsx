@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import SearchModal from "@/components/SearchModal";
+import UploadComponent from "@/components/UploadComponent";
+import { DynamicBody } from "@/components/DynamicBody";
 
 interface RootLayoutClientProps {
   children: React.ReactNode;
@@ -25,12 +27,13 @@ export function RootLayoutClient({ children, geistSansVariable, geistMonoVariabl
   }, []);
 
   return (
-    <body
+    <DynamicBody
       className={`${geistSansVariable} ${geistMonoVariable} antialiased min-h-screen flex flex-col`}
     >
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-      <main className="flex-grow">
+      <main className="flex-grow relative">
         {children}
+        <UploadComponent />
       </main>
       <footer className="mt-auto py-8 bg-slate-900 text-slate-400 relative z-50">
         <div className="container mx-auto px-4">
@@ -67,6 +70,6 @@ export function RootLayoutClient({ children, geistSansVariable, geistMonoVariabl
           </div>
         </div>
       </footer>
-    </body>
+    </DynamicBody>
   );
 }
