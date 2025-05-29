@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useUpload } from '@/hooks/useUpload';
+import { CountdownTimer } from './CountdownTimer';
 
 export default function UploadComponent() {
   const { uploadFile, isUploading, error, reset, progress } = useUpload();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showRefresh, setShowRefresh] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -40,13 +43,24 @@ export default function UploadComponent() {
     if (!file) return;
     try {
       await uploadFile(file);
-      // Clear the form after successful upload
-      setFile(null);
-      setPreviewUrl(null);
+      // Start processing state after successful upload
+      setIsProcessing(true);
+      // Keep the preview during processing
     } catch (err) {
       // Error is handled by the hook
       console.error('Upload failed:', err);
+      setFile(null);
+      setPreviewUrl(null);
     }
+  };
+
+  const handleProcessingComplete = useCallback(() => {
+    setIsProcessing(false);
+    setShowRefresh(true);
+  }, []);
+
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   // Cleanup preview URL when component unmounts or when preview changes
@@ -95,6 +109,26 @@ export default function UploadComponent() {
             <p className="text-red-500 text-sm">{error}</p>
           )}
 
+          {/* Processing state with countdown */}
+          {isProcessing && (
+            <div className="w-full text-center">
+              <CountdownTimer
+                duration={60}
+                onComplete={handleProcessingComplete}
+              />
+            </div>
+          )}
+
+          {/* Refresh button */}
+          {showRefresh && (
+            <button
+              onClick={handleRefresh}
+              className="w-full py-2 px-4 rounded-md font-medium text-white bg-green-600 hover:bg-green-700 transition-colors"
+            >
+              Click to see results
+            </button>
+          )}
+
           {/* Progress bar */}
           {isUploading && typeof progress === 'number' && (
             <div className="w-full">
@@ -111,24 +145,26 @@ export default function UploadComponent() {
           )}
 
           {/* Upload button */}
-          <button
-            onClick={handleUpload}
-            disabled={!file || isUploading}
-            className={`w-full py-2 px-4 rounded-md font-medium text-white transition-colors ${
-              file && !isUploading
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {isUploading ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Uploading...</span>
-              </div>
-            ) : (
-              'Upload Image'
-            )}
-          </button>
+          {!isProcessing && !showRefresh && (
+            <button
+              onClick={handleUpload}
+              disabled={!file || isUploading}
+              className={`w-full py-2 px-4 rounded-md font-medium text-white transition-colors ${
+                file && !isUploading
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {isUploading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Uploading...</span>
+                </div>
+              ) : (
+                'Upload Image'
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
